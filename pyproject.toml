@@ -5,8 +5,10 @@ description = "Pydantic AI POCs and demos"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "pydantic-ai>=1.44.0",
+    "fastapi>=0.128.0",
+    "pydantic-ai>=1.72.0",
     "rich>=14.2.0",
+    "uvicorn>=0.40.0",
 ]
 
 [build-system]
