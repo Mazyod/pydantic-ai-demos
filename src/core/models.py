@@ -3,7 +3,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 
 
 def get_model(
-    model_id: str = "qwen/qwen3-4b-thinking-2507",
+    model_id: str = "qwen/qwen3.6-35b-a3b",
     base_url: str = "http://localhost:1234/v1",
 ) -> OpenAIChatModel:
     """Get an OpenAI-compatible model configured for LM Studio."""
