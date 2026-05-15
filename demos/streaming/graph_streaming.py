@@ -185,13 +185,16 @@ class StreamingRouterNode(BaseNode[PipelineState, None, str]):
         # Emit node start
         await self.send_stream.send(NodeEvent("router", "start"))
 
-        # Stream events from router agent
-        async for event in router_agent.run_stream_events(ctx.state.query):
-            await self.send_stream.send(event)
+        # Stream events from router agent.
+        # `async with ... as stream` is the recommended form (ensures the
+        # event stream is cleaned up); bare `async for` is deprecated.
+        async with router_agent.run_stream_events(ctx.state.query) as stream:
+            async for event in stream:
+                await self.send_stream.send(event)
 
-            # Extract result from final event
-            if isinstance(event, AgentRunResultEvent):
-                ctx.state.route = event.result.output.route
+                # Extract result from final event
+                if isinstance(event, AgentRunResultEvent):
+                    ctx.state.route = event.result.output.route
 
         await self.send_stream.send(NodeEvent("router", "end"))
 
@@ -229,11 +232,12 @@ class StreamingAnswerNode(BaseNode[PipelineState, None, str]):
 
         prompt = f"Context: {ctx.state.context}\n\nQuestion: {ctx.state.query}"
 
-        async for event in answer_agent.run_stream_events(prompt):
-            await self.send_stream.send(event)
+        async with answer_agent.run_stream_events(prompt) as stream:
+            async for event in stream:
+                await self.send_stream.send(event)
 
-            if isinstance(event, AgentRunResultEvent):
-                ctx.state.response = event.result.output
+                if isinstance(event, AgentRunResultEvent):
+                    ctx.state.response = event.result.output
 
         await self.send_stream.send(NodeEvent("answer", "end"))
 
@@ -251,11 +255,12 @@ class StreamingDirectNode(BaseNode[PipelineState, None, str]):
 
         await self.send_stream.send(NodeEvent("direct", "start"))
 
-        async for event in direct_agent.run_stream_events(ctx.state.query):
-            await self.send_stream.send(event)
+        async with direct_agent.run_stream_events(ctx.state.query) as stream:
+            async for event in stream:
+                await self.send_stream.send(event)
 
-            if isinstance(event, AgentRunResultEvent):
-                ctx.state.response = event.result.output
+                if isinstance(event, AgentRunResultEvent):
+                    ctx.state.response = event.result.output
 
         await self.send_stream.send(NodeEvent("direct", "end"))
 
