@@ -264,3 +264,68 @@ reference for future demos:
 - CodeMode: `from pydantic_ai_harness import CodeMode`; `CodeMode(tools='all', max_retries=3)`;
   attach via `capabilities=[CodeMode()]`; collapses all tools into one sandboxed `run_code`
   (Monty); needs the `code-mode` extra + `pydantic-ai-slim>=1.95.1`.
+
+---
+
+## 8. Bespoke vs Official Skill Comparison & Quality Charter (2026-05-19)
+
+We compared our hand-curated `~/.claude/skills/pydantic-ai/` against the official Pydantic-team
+skill (`building-pydantic-ai-agents` **v1.1.0**). This section records the verdict, the one hard
+contradiction it resolved, our moat, and the quality charter that governs the bespoke skill going
+forward. (The bespoke skill itself lives outside this repo and is owned by other agents — this is
+the *curation record*, not the skill content.)
+
+### 8.1 Verified fact (re-checked against installed source)
+
+`pydantic_ai` installed = **1.96.1**. `AgentRunResult.usage` is a
+`_DeprecatedCallableProperty` (from `pydantic_ai._deprecated_callable`). Therefore
+**`result.usage` (property) is the correct/current form**, and **`result.usage()` (call) is the
+deprecated shim**. This was verified by direct introspection of the installed package, not docs.
+
+### 8.2 Comparison summary
+
+| | Bespoke `~/.claude/skills/pydantic-ai/` | Official `building-pydantic-ai-agents` v1.1.0 |
+|---|---|---|
+| Size | ~4,650 lines / 18 files — deep per topic | ~1,450 lines / 11 files — broad, shallow |
+| Version discipline | Every file stamped "Verified against pydantic-ai 1.96.1"; explicit deprecation→replacement maps (`instrument=`→`Instrumentation`, `builtin_tools=`→`NativeTool`, `MCPServerHTTP`→`MCPServerStreamableHTTP`, AG-UI removal map) | Unpinned; uses deprecated `.usage()` and bare `openai:` strings as if current |
+| Hard contradiction | `result.usage` **property** (correct) | `result.usage()` **method** (deprecated) |
+
+The single hard contradiction (`result.usage` property vs `.usage()` method) is resolved
+**decisively in the bespoke skill's favor** against installed 1.96.1 (see §8.1).
+
+### 8.3 Bespoke moat — do not regress
+
+1. **Version discipline** — per-file "Verified against pydantic-ai X.Y.Z" stamps + explicit
+   deprecation→replacement maps.
+2. **Deep harness/capabilities coverage** — `AbstractCapability` authoring, `CapabilityOrdering`,
+   `for_run` isolation, `pydantic-ai-harness`/`CodeMode` (beta).
+3. **Unique advanced content the official skill lacks** — beta `GraphBuilder` with reducers, the
+   hooks naming-convention decoder table, nested-graph streaming fan-in (anyio), the `Embedder`
+   testing surface, agent specs with Handlebars / `RunContext.deps` binding.
+4. **Pervasive anti-hallucination callouts** — explicit "this does NOT exist" notes.
+
+### 8.4 Official skill — strengths and weaknesses
+
+- **Genuine advantage (port as structure only, never as content):** navigation — decision trees,
+  front-loaded gotchas, intent-keyed routing. This is being ported into the bespoke skill as
+  *structure only*.
+- **Weaknesses:** future/fictional model names with no caveat; one internally-inconsistent graph
+  example despite a "tested examples" claim; asserted-but-undemonstrated APIs (`run_stream_sync`,
+  exact hook signatures); a 108-line redirect-only `COMMON-TASKS.md` carried as dead weight.
+
+### 8.5 Quality charter (governs the bespoke skill)
+
+1. **The bespoke skill is the source of truth** for Pydantic AI in our work. The official skill
+   is a **structural reference only — never a content source** (it lags and presents deprecated
+   patterns as current).
+2. **Verify before encoding.** Every claim/example is checked against the *actually installed*
+   `pydantic_ai` version; each reference file carries a "Verified against pydantic-ai X.Y.Z"
+   stamp.
+3. **Maintain explicit deprecation→replacement maps.** Prefer the modern surface: capabilities
+   over constructor kwargs; properties over deprecated callables; `openai-chat:` /
+   `openai-responses:` over bare `openai:`.
+4. **Depth over breadth.** Cover the hard / bleeding-edge surface (harness/capabilities, graphs,
+   streaming) thoroughly rather than skimming everything.
+5. **Use anti-hallucination "this does NOT exist" callouts deliberately.**
+6. **On every framework bump, re-verify** stamped files against the new version and update the
+   deprecation maps.

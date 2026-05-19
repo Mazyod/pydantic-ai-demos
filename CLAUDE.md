@@ -47,3 +47,16 @@ uv sync
 ## Pydantic AI Skill Feedback
 
 If you encounter difficulties with the `/pydantic-ai` skill (missing information, outdated patterns, unclear examples), spawn a sub-agent to update the skill files at `~/.claude/skills/pydantic-ai/` with improvements based on what you learned. This helps enhance the skill over time.
+
+## Pydantic AI Skill: Quality Charter
+
+The bespoke `~/.claude/skills/pydantic-ai/` skill is curated from this repo. When improving it, hold to:
+
+- **Bespoke skill is the source of truth.** The official `building-pydantic-ai-agents` skill is a *structural reference only* (navigation/decision-trees) — never a content source; it lags and shows deprecated patterns as current.
+- **Verify before encoding.** Check every claim/example against the *actually installed* `pydantic_ai` version; each reference file carries a "Verified against pydantic-ai X.Y.Z" stamp.
+- **Maintain deprecation→replacement maps.** Prefer the modern surface: capabilities over constructor kwargs; properties over deprecated callables (e.g. `result.usage`, not `result.usage()`); `openai-chat:`/`openai-responses:` over bare `openai:`.
+- **Depth over breadth.** Cover the hard/bleeding-edge surface (harness/capabilities, graphs, streaming) thoroughly rather than skimming everything.
+- **Use anti-hallucination "this does NOT exist" callouts deliberately.**
+- **On every framework bump, re-verify** stamped files against the new version and update deprecation maps.
+
+Full comparison vs the official skill and the resolved `result.usage` contradiction: see `docs/pydantic-ai-modernization.md` §8.
